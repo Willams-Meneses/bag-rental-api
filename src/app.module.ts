@@ -1,7 +1,6 @@
-// src/app.module.ts - ACTUALIZADO
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -12,6 +11,21 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { ListingsModule } from './listings/listings.module';
+
+interface DatabaseConfig {
+  type: 'postgres';
+  host?: string;
+  port?: number;
+  username?: string;
+  password?: string;
+  database?: string;
+  url?: string;
+  ssl?: boolean | { rejectUnauthorized: boolean };
+  entities?: string[];
+  migrations?: string[];
+  logging?: boolean;
+}
 
 @Module({
   imports: [
@@ -22,8 +36,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        const dbConfig = configService.get('database');
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
+        const dbConfig = configService.get<DatabaseConfig>('database');
         // Verificar configuración
         if (!dbConfig) {
           throw new Error('Database configuration not found');
@@ -37,15 +51,15 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
         // Combinar configuración de database.config.ts con opciones de NestJS
         return {
           ...dbConfig,
-          autoLoadEntities: true, // ← AQUÍ SÍ va autoLoadEntities
-          // Mantener synchronize solo en desarrollo
+          autoLoadEntities: true,
           synchronize: process.env.NODE_ENV === 'development',
-        };
+        } as TypeOrmModuleOptions;
       },
       inject: [ConfigService],
     }),
     AuthModule,
     UsersModule,
+    ListingsModule,
   ],
   providers: [
     {
