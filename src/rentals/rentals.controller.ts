@@ -51,7 +51,6 @@ export class RentalsController {
     return this.rentalsService.createRental(user.id, dto);
   }
 
-  //new controller
   @Patch(':id/confirm-payment')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm payment (mock for now)' })
